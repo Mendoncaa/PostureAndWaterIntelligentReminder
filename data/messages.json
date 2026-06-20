@@ -1,0 +1,19 @@
+{
+    "messages": [
+        "Estás a bater código há {minutes} minutos. Vai beber água antes que o teu cérebro dê Stack Overflow! 🥤",
+        "ALERTA: O teu corpo não é um servidor — precisa de manutenção! Levanta-te e hidrata-te. 💧",
+        "Erro 418: I'm a teapot. Tu não és — vai beber água, humano! ☕",
+        "git commit -m 'pausa para água' && git push origin hydration 🚰",
+        "Se o teu código tivesse tantos bugs como minutos sem água, já tinhas feito rollback. Bebe! 🐛",
+        "SEGFAULT na postura! Core dump iminente. Endireita as costas e vai ao copo. 🦴",
+        "while(coding && !water) {{ back_pain++; focus--; }} // Fix this bug agora! 🔧",
+        "O teu uptime sem água: {minutes} min. Até o Linux precisa de refresh. Vai ao copo! 🐧",
+        "Pull request aprovado: merge a tua cadeira com a posição vertical. Levanta-te! 🧍",
+        "Desafio: Vai buscar água E faz 5 alongamentos. Bónus: não penses em código por 2 minutos. 🧘",
+        "A tua coluna vertebral abriu um ticket de prioridade CRITICAL. Resolve antes do deploy! 🎫",
+        "Facto: Programadores hidratados cometem 47% menos bugs. (Fonte: trust me bro). Bebe água! 📊",
+        "sudo apt-get install water && sudo systemctl restart posture 💻",
+        "Commit message sugerida: 'refactor(body): melhorar hidratação e postura'. Executa agora! 📝",
+        "Exception não tratada: DeshydratedException. Handler recomendado: ir à cozinha. 🏃"
+    ]
+}
