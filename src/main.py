@@ -4,7 +4,12 @@ import time
 import logging
 import threading
 
-from src.config.settings import load_settings, get_activity_threshold_seconds, get_idle_reset_seconds
+from src.config.settings import (
+    load_settings,
+    get_activity_threshold_seconds,
+    get_idle_reset_seconds,
+    get_repeat_interval_seconds,
+)
 from src.monitor.activity_tracker import ActivityTracker
 from src.monitor.idle_detector import IdleDetector
 from src.notifications.messages import MessageLoader
@@ -20,6 +25,7 @@ class IntelligentReminder:
         self._settings = settings or load_settings()
         self._activity_threshold = get_activity_threshold_seconds(self._settings)
         self._idle_reset = get_idle_reset_seconds(self._settings)
+        self._repeat_interval = get_repeat_interval_seconds(self._settings)
 
         self._tracker = ActivityTracker(on_activity_callback=self._on_activity)
         self._idle_detector = IdleDetector(
@@ -28,9 +34,12 @@ class IntelligentReminder:
         )
         self._message_loader = MessageLoader()
         self._notifier = Notifier(title=self._settings["notification_title"])
+        self._tray = None
 
         self._session_start = None
         self._notification_sent = False
+        self._last_notification_time = None
+        self._paused = False
         self._check_timer = None
         self._running = False
         self._lock = threading.Lock()
@@ -43,15 +52,22 @@ class IntelligentReminder:
     def _on_activity(self):
         """Called on every keyboard/mouse event."""
         with self._lock:
+            if self._paused:
+                return
             if self._session_start is None:
                 self._session_start = time.time()
                 self._notification_sent = False
+                self._last_notification_time = None
 
     def _on_idle_reset(self):
         """Called when user is idle long enough to reset the timer."""
         with self._lock:
             self._session_start = None
             self._notification_sent = False
+            self._last_notification_time = None
+            if self._notification_sent:
+                self._sessions_completed += 1
+                logger.info("Pausa detetada! Timer resetado. Boa hidratação! 💧")
 
     def _check_threshold(self):
         """Periodically check if activity threshold has been reached."""
@@ -62,23 +78,31 @@ class IntelligentReminder:
         message = None
 
         with self._lock:
-            if (
-                self._session_start is not None
-                and not self._notification_sent
-            ):
+            if self._paused or self._session_start is None:
+                pass
+            elif not self._notification_sent:
+                # First notification after threshold
                 elapsed = time.time() - self._session_start
                 if elapsed >= self._activity_threshold:
                     minutes = int(elapsed / 60)
                     message = self._message_loader.get_message(minutes=minutes)
                     should_notify = True
                     self._notification_sent = True
-                    self._session_start = None
+                    self._last_notification_time = time.time()
+            else:
+                # Progressive: repeat if still active after repeat_interval
+                if self._last_notification_time:
+                    since_last = time.time() - self._last_notification_time
+                    if since_last >= self._repeat_interval:
+                        total_min = int((time.time() - self._session_start) / 60) if self._session_start else 50
+                        message = self._message_loader.get_message(minutes=total_min)
+                        should_notify = True
+                        self._last_notification_time = time.time()
 
         # Send notification outside of lock to avoid blocking activity recording
         if should_notify and message:
             self._notifier.send(message)
             self._notifications_sent_count += 1
-            self._sessions_completed += 1
             logger.info(f"Notificação #{self._notifications_sent_count} enviada.")
 
         # Schedule next check (every 30 seconds)
@@ -108,13 +132,39 @@ class IntelligentReminder:
         # Start threshold checker
         self._check_threshold()
 
+        # Start system tray icon
+        if self._settings.get("show_tray_icon", True):
+            from src.tray import TrayIcon
+            self._tray = TrayIcon(
+                on_pause=self.pause,
+                on_resume=self.resume,
+                on_quit=self.stop,
+            )
+            self._tray.start()
+
         minutes = self._settings["activity_threshold_minutes"]
         idle_min = self._settings["idle_reset_minutes"]
+        repeat_min = self._settings["repeat_interval_minutes"]
         logger.info("IntelligentReminder ativo!")
         logger.info(f"  Alerta após {minutes} min de atividade contínua")
+        logger.info(f"  Lembrete repetido a cada {repeat_min} min se ignorado")
         logger.info(f"  Reset após {idle_min} min de inatividade")
         logger.info(f"  {self._message_loader.total_messages} mensagens carregadas")
         logger.info("  Ctrl+C para sair")
+
+    def pause(self):
+        """Pause monitoring (from tray or programmatically)."""
+        with self._lock:
+            self._paused = True
+            self._session_start = None
+            self._notification_sent = False
+        logger.info("Monitorização pausada")
+
+    def resume(self):
+        """Resume monitoring."""
+        with self._lock:
+            self._paused = False
+        logger.info("Monitorização retomada")
 
     def stop(self):
         """Stop all monitoring and clean up."""
@@ -126,6 +176,10 @@ class IntelligentReminder:
 
         self._idle_detector.stop()
         self._tracker.stop()
+
+        if self._tray:
+            self._tray.stop()
+            self._tray = None
 
         if self._start_time:
             uptime_min = int((time.time() - self._start_time) / 60)

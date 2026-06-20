@@ -7,7 +7,9 @@ Script Python que monitoriza a tua atividade no computador e envia **notificaç�
 1. **Monitoriza** teclado e rato em background (event-driven, zero polling)
 2. **Deteta** sessões longas (50 min de atividade contínua por defeito)
 3. **Notifica** com uma piada/desafio de programador em português
-4. **Reset automático** quando ficas inativo 5+ minutos (foste beber água!)
+4. **Repete** lembretes a cada 10 min se ignorares (progressivo)
+5. **Reset automático** quando ficas inativo 5+ minutos (foste beber água!)
+6. **System tray** — ícone com pause/resume/quit (minimizado)
 
 ## Instalação
 
@@ -43,7 +45,9 @@ Edita `config.json` na raiz do projeto:
 {
     "activity_threshold_minutes": 50,
     "idle_reset_minutes": 5,
+    "repeat_interval_minutes": 10,
     "notification_title": "🥤 Alerta de Hidratação & Postura",
+    "show_tray_icon": true,
     "enabled": true
 }
 ```
@@ -52,7 +56,9 @@ Edita `config.json` na raiz do projeto:
 |---|---|---|
 | `activity_threshold_minutes` | 50 | Minutos de atividade antes do alerta |
 | `idle_reset_minutes` | 5 | Minutos de inatividade para reset |
+| `repeat_interval_minutes` | 10 | Repete lembrete a cada N min se ignorado |
 | `notification_title` | 🥤 Alerta... | Título da notificação |
+| `show_tray_icon` | true | Mostra ícone no system tray |
 | `enabled` | true | Ativar/desativar |
 
 ## Testes

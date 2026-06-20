@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONFIG = {
     "activity_threshold_minutes": 50,
     "idle_reset_minutes": 5,
+    "repeat_interval_minutes": 10,
     "notification_title": "🥤 Alerta de Hidratação & Postura",
+    "show_tray_icon": True,
     "enabled": True,
 }
 
@@ -16,6 +18,7 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
 _VALIDATION_RULES = {
     "activity_threshold_minutes": (1, 480),   # 1 min to 8 hours
     "idle_reset_minutes": (1, 60),            # 1 min to 1 hour
+    "repeat_interval_minutes": (1, 60),       # 1 min to 1 hour
 }
 
 
@@ -52,3 +55,7 @@ def get_activity_threshold_seconds(settings: dict) -> int:
 
 def get_idle_reset_seconds(settings: dict) -> int:
     return settings["idle_reset_minutes"] * 60
+
+
+def get_repeat_interval_seconds(settings: dict) -> int:
+    return settings["repeat_interval_minutes"] * 60

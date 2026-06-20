@@ -43,3 +43,12 @@
 - [x] **6.6** Estatísticas básicas (notificações enviadas, uptime)
 - [x] **6.7** Testes atualizados — 39 testes passam
 - [x] **6.8** Git commit + push
+
+### Fase 7 — System Tray + Lembretes Progressivos (v2.0)
+- [x] **7.1** Adicionar pystray + Pillow às dependências
+- [x] **7.2** Implementar `src/tray.py` — ícone com pause/resume/quit
+- [x] **7.3** Integrar tray com main.py (start/stop lifecycle)
+- [x] **7.4** Lembretes progressivos — repetir a cada N min se ignorado
+- [x] **7.5** Config: `repeat_interval_minutes`, `show_tray_icon`
+- [x] **7.6** Testes para pause/resume/progressive — 42 testes passam
+- [x] **7.7** Git commit + push + tag v2.0.0

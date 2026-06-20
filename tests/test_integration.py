@@ -13,7 +13,9 @@ class TestIntegration:
         return {
             "activity_threshold_minutes": 0.05,  # 3 seconds
             "idle_reset_minutes": 0.05,  # 3 seconds
+            "repeat_interval_minutes": 0.05,  # 3 seconds
             "notification_title": "Test Alert",
+            "show_tray_icon": False,
             "enabled": True,
         }
 
@@ -97,8 +99,8 @@ class TestIntegration:
     @patch("src.notifications.notifier.notification.notify")
     @patch("src.monitor.activity_tracker.keyboard.Listener")
     @patch("src.monitor.activity_tracker.mouse.Listener")
-    def test_notification_resets_session(self, mock_mouse, mock_kb, mock_notify):
-        """After notification is sent, session resets for next cycle."""
+    def test_notification_marks_sent(self, mock_mouse, mock_kb, mock_notify):
+        """After notification is sent, notification_sent flag is True."""
         settings = self._fast_settings()
         reminder = IntelligentReminder(settings=settings)
 
@@ -111,8 +113,74 @@ class TestIntegration:
 
         time.sleep(0.2)
 
-        # Session should be reset after notification
-        assert reminder._session_start is None
+        assert reminder._notification_sent is True
 
         reminder.stop()
         mock_notify.assert_called_once()
+
+    @patch("src.notifications.notifier.notification.notify")
+    @patch("src.monitor.activity_tracker.keyboard.Listener")
+    @patch("src.monitor.activity_tracker.mouse.Listener")
+    def test_progressive_reminder(self, mock_mouse, mock_kb, mock_notify):
+        """If user ignores first notification, a repeat is sent after interval."""
+        settings = self._fast_settings()
+        reminder = IntelligentReminder(settings=settings)
+
+        reminder.start()
+
+        # Simulate: already notified, but still active
+        reminder._session_start = time.time() - 20
+        reminder._notification_sent = True
+        reminder._last_notification_time = time.time() - 5  # 5s ago (threshold is 3s)
+
+        reminder._check_threshold()
+        time.sleep(0.2)
+        reminder.stop()
+
+        # Should have sent a repeat notification
+        mock_notify.assert_called_once()
+
+    @patch("src.notifications.notifier.notification.notify")
+    @patch("src.monitor.activity_tracker.keyboard.Listener")
+    @patch("src.monitor.activity_tracker.mouse.Listener")
+    def test_pause_blocks_notifications(self, mock_mouse, mock_kb, mock_notify):
+        """When paused, no notifications are sent."""
+        settings = self._fast_settings()
+        reminder = IntelligentReminder(settings=settings)
+
+        reminder.start()
+        reminder.pause()
+
+        # Simulate activity while paused — should be ignored
+        reminder._on_activity()
+        assert reminder._session_start is None
+
+        # Even with a forced session, check should skip
+        reminder._session_start = time.time() - 10
+        reminder._notification_sent = False
+        reminder._check_threshold()
+        time.sleep(0.2)
+
+        reminder.stop()
+        mock_notify.assert_not_called()
+
+    @patch("src.notifications.notifier.notification.notify")
+    @patch("src.monitor.activity_tracker.keyboard.Listener")
+    @patch("src.monitor.activity_tracker.mouse.Listener")
+    def test_resume_after_pause(self, mock_mouse, mock_kb, mock_notify):
+        """Resume re-enables activity tracking."""
+        settings = self._fast_settings()
+        reminder = IntelligentReminder(settings=settings)
+
+        reminder.start()
+        reminder.pause()
+        assert reminder._paused is True
+
+        reminder.resume()
+        assert reminder._paused is False
+
+        # Activity should work again
+        reminder._on_activity()
+        assert reminder._session_start is not None
+
+        reminder.stop()
