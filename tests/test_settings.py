@@ -49,3 +49,12 @@ class TestSettings:
         with patch("src.config.settings.CONFIG_PATH", fake_path):
             settings = load_settings()
             assert settings == DEFAULT_CONFIG
+
+    def test_load_settings_malformed_json_uses_defaults(self, tmp_path):
+        config_file = tmp_path / "config.json"
+        config_file.write_text("{ invalid json !!!", encoding="utf-8")
+
+        with patch("src.config.settings.CONFIG_PATH", config_file):
+            settings = load_settings()
+            assert settings["activity_threshold_minutes"] == DEFAULT_CONFIG["activity_threshold_minutes"]
+            assert settings == DEFAULT_CONFIG

@@ -62,12 +62,13 @@ class IntelligentReminder:
     def _on_idle_reset(self):
         """Called when user is idle long enough to reset the timer."""
         with self._lock:
+            was_notified = self._notification_sent
             self._session_start = None
             self._notification_sent = False
             self._last_notification_time = None
-            if self._notification_sent:
+            if was_notified:
                 self._sessions_completed += 1
-                logger.info("Pausa detetada! Timer resetado. Boa hidratação! 💧")
+                logger.info("Pausa detetada! Timer resetado. Boa hidratação!")
 
     def _check_threshold(self):
         """Periodically check if activity threshold has been reached."""
@@ -168,6 +169,8 @@ class IntelligentReminder:
 
     def stop(self):
         """Stop all monitoring and clean up."""
+        if not self._running:
+            return
         self._running = False
 
         if self._check_timer:

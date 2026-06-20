@@ -52,3 +52,12 @@
 - [x] **7.5** Config: `repeat_interval_minutes`, `show_tray_icon`
 - [x] **7.6** Testes para pause/resume/progressive — 42 testes passam
 - [x] **7.7** Git commit + push + tag v2.0.0
+
+### Fase 8 — Bug Fixes & Robustez (v2.1)
+- [x] **8.1** Fix `_on_idle_reset` — dead code bug (`sessions_completed` nunca incrementava)
+- [x] **8.2** Fix tray double-stop — `stop()` idempotente, `_quit` não chama `icon.stop()` redundante
+- [x] **8.3** Config JSON error handling — malformed JSON não crasha, usa defaults
+- [x] **8.4** Notifier exception handling — plyer failure não interrompe o loop
+- [x] **8.5** Tray title atualiza ao pausar/retomar
+- [x] **8.6** Testes novos — 46 testes passam
+- [x] **8.7** Git commit + push + tag v2.1.0

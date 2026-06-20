@@ -61,7 +61,8 @@ class TestNotifier:
     @patch("src.notifications.notifier.notification.notify")
     def test_send_calls_plyer(self, mock_notify):
         notifier = Notifier(title="Test Title")
-        notifier.send("Test message")
+        result = notifier.send("Test message")
+        assert result is True
         mock_notify.assert_called_once_with(
             title="Test Title",
             message="Test message",
@@ -81,3 +82,10 @@ class TestNotifier:
         notifier = Notifier()
         notifier.send("🥤 Bebe água! Está calor 🌡️")
         mock_notify.assert_called_once()
+
+    @patch("src.notifications.notifier.notification.notify")
+    def test_send_returns_false_on_exception(self, mock_notify):
+        mock_notify.side_effect = RuntimeError("Notification service unavailable")
+        notifier = Notifier()
+        result = notifier.send("Test")
+        assert result is False

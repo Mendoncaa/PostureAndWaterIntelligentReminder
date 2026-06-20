@@ -35,18 +35,19 @@ class TrayIcon:
             if self._on_resume:
                 self._on_resume()
             self._update_menu()
-            logger.info("Monitorização retomada (via tray)")
         else:
             self._paused = True
             if self._on_pause:
                 self._on_pause()
             self._update_menu()
-            logger.info("Monitorização pausada (via tray)")
 
     def _quit(self, icon, item):
         if self._on_quit:
             self._on_quit()
-        icon.stop()
+        # on_quit already calls stop() which stops the icon
+        # Only stop directly if no callback was set
+        if not self._on_quit:
+            icon.stop()
 
     def _build_menu(self):
         pause_text = "▶ Retomar" if self._paused else "⏸ Pausar"
@@ -61,6 +62,10 @@ class TrayIcon:
             self._icon.menu = self._build_menu()
             color = "#9E9E9E" if self._paused else "#4FC3F7"
             self._icon.icon = _create_icon_image(color)
+            self._icon.title = (
+                "IntelligentReminder - Pausado" if self._paused
+                else "IntelligentReminder - Ativo"
+            )
 
     def start(self):
         """Start tray icon in a background thread."""

@@ -184,3 +184,39 @@ class TestIntegration:
         assert reminder._session_start is not None
 
         reminder.stop()
+
+    @patch("src.notifications.notifier.notification.notify")
+    @patch("src.monitor.activity_tracker.keyboard.Listener")
+    @patch("src.monitor.activity_tracker.mouse.Listener")
+    def test_idle_reset_increments_sessions(self, mock_mouse, mock_kb, mock_notify):
+        """Idle reset after notification increments sessions_completed."""
+        settings = self._fast_settings()
+        reminder = IntelligentReminder(settings=settings)
+
+        reminder.start()
+        assert reminder._sessions_completed == 0
+
+        # Simulate: session was active and notification was sent
+        reminder._session_start = time.time() - 10
+        reminder._notification_sent = True
+
+        # Idle reset should count this as a completed session
+        reminder._on_idle_reset()
+        assert reminder._sessions_completed == 1
+
+        reminder.stop()
+
+    @patch("src.notifications.notifier.notification.notify")
+    @patch("src.monitor.activity_tracker.keyboard.Listener")
+    @patch("src.monitor.activity_tracker.mouse.Listener")
+    def test_stop_is_idempotent(self, mock_mouse, mock_kb, mock_notify):
+        """Calling stop() multiple times does not crash."""
+        settings = self._fast_settings()
+        reminder = IntelligentReminder(settings=settings)
+
+        reminder.start()
+        reminder.stop()
+        reminder.stop()  # Should not raise
+        assert not reminder.is_running
+
+        reminder.stop()
