@@ -6,9 +6,12 @@ from pynput import keyboard, mouse
 class ActivityTracker:
     """Tracks keyboard and mouse activity using OS-level event hooks."""
 
+    MOUSE_MOVE_THROTTLE_SECONDS = 1.0  # Max 1 mouse-move event per second
+
     def __init__(self, on_activity_callback=None):
         self._on_activity = on_activity_callback
         self._last_activity_time = time.time()
+        self._last_mouse_move_time = 0.0
         self._lock = threading.Lock()
         self._keyboard_listener = None
         self._mouse_listener = None
@@ -29,6 +32,10 @@ class ActivityTracker:
         self._record_activity()
 
     def _on_mouse_move(self, x, y):
+        now = time.time()
+        if now - self._last_mouse_move_time < self.MOUSE_MOVE_THROTTLE_SECONDS:
+            return
+        self._last_mouse_move_time = now
         self._record_activity()
 
     def _on_mouse_click(self, x, y, button, pressed):
@@ -46,7 +53,6 @@ class ActivityTracker:
 
         self._keyboard_listener = keyboard.Listener(
             on_press=self._on_key_event,
-            on_release=self._on_key_event,
         )
         self._mouse_listener = mouse.Listener(
             on_move=self._on_mouse_move,

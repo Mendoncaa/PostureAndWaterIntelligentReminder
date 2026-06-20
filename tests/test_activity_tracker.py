@@ -105,3 +105,25 @@ class TestActivityTracker:
             t.join()
 
         assert len(errors) == 0
+
+    def test_mouse_move_throttled(self):
+        """Rapid mouse moves should be throttled to 1 per second."""
+        callback = MagicMock()
+        tracker = ActivityTracker(on_activity_callback=callback)
+        tracker._last_mouse_move_time = time.time()
+
+        # Rapid moves within throttle window should be ignored
+        tracker._on_mouse_move(10, 10)
+        tracker._on_mouse_move(20, 20)
+        tracker._on_mouse_move(30, 30)
+
+        callback.assert_not_called()
+
+    def test_mouse_move_after_throttle_window(self):
+        """Mouse move after throttle window should fire."""
+        callback = MagicMock()
+        tracker = ActivityTracker(on_activity_callback=callback)
+        tracker._last_mouse_move_time = time.time() - 2.0  # 2s ago
+
+        tracker._on_mouse_move(10, 10)
+        callback.assert_called_once()

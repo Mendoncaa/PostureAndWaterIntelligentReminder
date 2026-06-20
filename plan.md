@@ -33,3 +33,13 @@
 - [x] **5.1** README.md completo
 - [x] **5.2** Validação no OS atual (Windows, 31 testes passam)
 - [x] **5.3** Git commit final + tag v1.0.0
+
+### Fase 6 — Correções & Melhorias (v1.1)
+- [x] **6.1** Throttle mouse move events (1 evento/segundo máx) — fix CPU spike
+- [x] **6.2** Mover notificação para fora do lock — fix potencial deadlock
+- [x] **6.3** Remover `on_release` do keyboard (duplicação desnecessária)
+- [x] **6.4** Logging com `logging` module (substituir prints)
+- [x] **6.5** Validação de config (clamp valores a ranges seguros)
+- [x] **6.6** Estatísticas básicas (notificações enviadas, uptime)
+- [x] **6.7** Testes atualizados — 39 testes passam
+- [x] **6.8** Git commit + push

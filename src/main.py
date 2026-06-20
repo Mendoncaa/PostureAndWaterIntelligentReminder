@@ -1,6 +1,7 @@
 import signal
 import sys
 import time
+import logging
 import threading
 
 from src.config.settings import load_settings, get_activity_threshold_seconds, get_idle_reset_seconds
@@ -8,6 +9,8 @@ from src.monitor.activity_tracker import ActivityTracker
 from src.monitor.idle_detector import IdleDetector
 from src.notifications.messages import MessageLoader
 from src.notifications.notifier import Notifier
+
+logger = logging.getLogger(__name__)
 
 
 class IntelligentReminder:
@@ -32,6 +35,11 @@ class IntelligentReminder:
         self._running = False
         self._lock = threading.Lock()
 
+        # Stats
+        self._notifications_sent_count = 0
+        self._sessions_completed = 0
+        self._start_time = None
+
     def _on_activity(self):
         """Called on every keyboard/mouse event."""
         with self._lock:
@@ -50,6 +58,9 @@ class IntelligentReminder:
         if not self._running:
             return
 
+        should_notify = False
+        message = None
+
         with self._lock:
             if (
                 self._session_start is not None
@@ -59,10 +70,16 @@ class IntelligentReminder:
                 if elapsed >= self._activity_threshold:
                     minutes = int(elapsed / 60)
                     message = self._message_loader.get_message(minutes=minutes)
-                    self._notifier.send(message)
+                    should_notify = True
                     self._notification_sent = True
-                    # Reset session so it can trigger again after next idle+active cycle
                     self._session_start = None
+
+        # Send notification outside of lock to avoid blocking activity recording
+        if should_notify and message:
+            self._notifier.send(message)
+            self._notifications_sent_count += 1
+            self._sessions_completed += 1
+            logger.info(f"Notificação #{self._notifications_sent_count} enviada.")
 
         # Schedule next check (every 30 seconds)
         if self._running:
@@ -73,12 +90,13 @@ class IntelligentReminder:
     def start(self):
         """Start monitoring."""
         if not self._settings["enabled"]:
-            print("IntelligentReminder está desativado na configuração.")
+            logger.warning("IntelligentReminder está desativado na configuração.")
             return
 
         self._running = True
         self._session_start = None
         self._notification_sent = False
+        self._start_time = time.time()
 
         # Start activity tracker
         self._tracker.start()
@@ -92,11 +110,11 @@ class IntelligentReminder:
 
         minutes = self._settings["activity_threshold_minutes"]
         idle_min = self._settings["idle_reset_minutes"]
-        print(f"✅ IntelligentReminder ativo!")
-        print(f"   ⏱️  Alerta após {minutes} min de atividade contínua")
-        print(f"   😴 Reset após {idle_min} min de inatividade")
-        print(f"   📝 {self._message_loader.total_messages} mensagens carregadas")
-        print(f"   Ctrl+C para sair")
+        logger.info("IntelligentReminder ativo!")
+        logger.info(f"  Alerta após {minutes} min de atividade contínua")
+        logger.info(f"  Reset após {idle_min} min de inatividade")
+        logger.info(f"  {self._message_loader.total_messages} mensagens carregadas")
+        logger.info("  Ctrl+C para sair")
 
     def stop(self):
         """Stop all monitoring and clean up."""
@@ -108,7 +126,13 @@ class IntelligentReminder:
 
         self._idle_detector.stop()
         self._tracker.stop()
-        print("\n🛑 IntelligentReminder encerrado. Até à próxima!")
+
+        if self._start_time:
+            uptime_min = int((time.time() - self._start_time) / 60)
+            logger.info(
+                f"Sessão encerrada. Uptime: {uptime_min} min | "
+                f"Notificações enviadas: {self._notifications_sent_count}"
+            )
 
     @property
     def is_running(self) -> bool:
@@ -116,6 +140,12 @@ class IntelligentReminder:
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
     settings = load_settings()
     reminder = IntelligentReminder(settings=settings)
 

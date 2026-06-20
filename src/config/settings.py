@@ -1,6 +1,8 @@
 import json
-import os
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = {
     "activity_threshold_minutes": 50,
@@ -10,6 +12,25 @@ DEFAULT_CONFIG = {
 }
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
+
+_VALIDATION_RULES = {
+    "activity_threshold_minutes": (1, 480),   # 1 min to 8 hours
+    "idle_reset_minutes": (1, 60),            # 1 min to 1 hour
+}
+
+
+def _validate_settings(config: dict) -> dict:
+    """Validate and clamp config values to safe ranges."""
+    for key, (min_val, max_val) in _VALIDATION_RULES.items():
+        if key in config:
+            value = config[key]
+            if not isinstance(value, (int, float)) or value < min_val:
+                logger.warning(f"Config '{key}' = {value} inválido. Usando mínimo: {min_val}")
+                config[key] = min_val
+            elif value > max_val:
+                logger.warning(f"Config '{key}' = {value} demasiado alto. Usando máximo: {max_val}")
+                config[key] = max_val
+    return config
 
 
 def load_settings() -> dict:
@@ -22,7 +43,7 @@ def load_settings() -> dict:
             if key in user_config:
                 config[key] = user_config[key]
 
-    return config
+    return _validate_settings(config)
 
 
 def get_activity_threshold_seconds(settings: dict) -> int:
