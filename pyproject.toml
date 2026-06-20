@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "intelligent-reminder"
+version = "1.0.0"
+description = "Alerta de Copo de Água e Postura Inteligente - Monitoriza atividade e envia lembretes"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "pynput>=1.7.6",
+    "plyer>=2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
+]
+
+[project.scripts]
+intelligent-reminder = "src.main:main"

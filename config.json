@@ -1,0 +1,6 @@
+{
+    "activity_threshold_minutes": 50,
+    "idle_reset_minutes": 5,
+    "notification_title": "🥤 Alerta de Hidratação & Postura",
+    "enabled": true
+}
