@@ -58,3 +58,29 @@ class TestSettings:
             settings = load_settings()
             assert settings["activity_threshold_minutes"] == DEFAULT_CONFIG["activity_threshold_minutes"]
             assert settings == DEFAULT_CONFIG
+
+    def test_validate_boolean_fields(self):
+        config = {
+            "enabled": "yes",  # Not a bool
+            "show_tray_icon": 1,  # Not a bool
+            "activity_threshold_minutes": 50,
+            "idle_reset_minutes": 5,
+        }
+        result = _validate_settings(config)
+        assert result["enabled"] == DEFAULT_CONFIG["enabled"]
+        assert result["show_tray_icon"] == DEFAULT_CONFIG["show_tray_icon"]
+
+    def test_validate_string_field(self):
+        config = {
+            "notification_title": 123,  # Not a string
+            "activity_threshold_minutes": 50,
+            "idle_reset_minutes": 5,
+        }
+        result = _validate_settings(config)
+        assert result["notification_title"] == DEFAULT_CONFIG["notification_title"]
+
+    def test_validate_accepts_valid_booleans(self):
+        config = {"enabled": False, "show_tray_icon": True}
+        result = _validate_settings(config)
+        assert result["enabled"] is False
+        assert result["show_tray_icon"] is True

@@ -1,10 +1,10 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "intelligent-reminder"
-version = "1.0.0"
+version = "2.2.0"
 description = "Alerta de Copo de Água e Postura Inteligente - Monitoriza atividade e envia lembretes"
 requires-python = ">=3.10"
 license = {text = "MIT"}

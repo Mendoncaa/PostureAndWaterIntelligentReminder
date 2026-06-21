@@ -33,6 +33,18 @@ def _validate_settings(config: dict) -> dict:
             elif value > max_val:
                 logger.warning(f"Config '{key}' = {value} demasiado alto. Usando máximo: {max_val}")
                 config[key] = max_val
+
+    # Validate boolean fields
+    for key in ("enabled", "show_tray_icon"):
+        if key in config and not isinstance(config[key], bool):
+            logger.warning(f"Config '{key}' = {config[key]!r} não é booleano. Usando default.")
+            config[key] = DEFAULT_CONFIG[key]
+
+    # Validate string fields
+    if "notification_title" in config and not isinstance(config["notification_title"], str):
+        logger.warning("Config 'notification_title' inválido. Usando default.")
+        config["notification_title"] = DEFAULT_CONFIG["notification_title"]
+
     return config
 
 

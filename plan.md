@@ -61,3 +61,15 @@
 - [x] **8.5** Tray title atualiza ao pausar/retomar
 - [x] **8.6** Testes novos — 46 testes passam
 - [x] **8.7** Git commit + push + tag v2.1.0
+
+### Fase 9 — Auditoria & Remediação (v2.2)
+- [x] **9.1** Fix `pyproject.toml` build-backend (`setuptools.build_meta`) — `pip install -e .` funciona
+- [x] **9.2** `MessageLoader` — try/except para ficheiro ausente/corrompido/vazio, fallback messages
+- [x] **9.3** `get_message` — `str.replace` em vez de `.format()` (seguro contra `{x}` solto)
+- [x] **9.4** Config validation — tipos bool (`enabled`, `show_tray_icon`) e string (`notification_title`)
+- [x] **9.5** Stats counter (`_notifications_sent_count`) movido para dentro do lock
+- [x] **9.6** `requirements.txt` — só runtime deps (dev deps via `pip install -e ".[dev]"`)
+- [x] **9.7** `CHECK_INTERVAL_SECONDS` — constante nomeada em vez de magic number 30
+- [x] **9.8** Privacy note no README — documenta que NÃO captura conteúdo de teclas
+- [x] **9.9** Testes novos — 53 testes passam
+- [x] **9.10** Git commit + push + tag v2.2.0

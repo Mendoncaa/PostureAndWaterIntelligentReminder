@@ -89,6 +89,12 @@ src/
     └── settings.py         # Gestão de configuração
 ```
 
+## Privacidade
+
+Este programa usa um keyboard hook global (via `pynput`), mas **NÃO captura nem armazena o conteúdo das teclas**.
+Apenas regista o *timestamp* do último evento para calcular duração de atividade.
+Nenhum dado sai da máquina — sem telemetria, sem rede, sem logs de input.
+
 ## Licença
 
 MIT

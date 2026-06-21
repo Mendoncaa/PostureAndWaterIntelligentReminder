@@ -56,6 +56,36 @@ class TestMessageLoader:
         loader = MessageLoader()
         assert loader.total_messages >= 10
 
+    def test_missing_file_uses_fallback(self, tmp_path):
+        fake_path = tmp_path / "nonexistent.json"
+        loader = MessageLoader(messages_path=fake_path)
+        assert loader.total_messages >= 1
+        msg = loader.get_message(minutes=25)
+        assert "25" in msg
+
+    def test_malformed_json_uses_fallback(self, tmp_path):
+        bad_file = tmp_path / "bad.json"
+        bad_file.write_text("not json {{{", encoding="utf-8")
+        loader = MessageLoader(messages_path=bad_file)
+        assert loader.total_messages >= 1
+
+    def test_empty_messages_list_uses_fallback(self):
+        path = self._create_temp_messages([])
+        # Empty list triggers fallback since we validate non-empty
+        # Actually _create_temp_messages creates {"messages": []}, let's make a proper one
+        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
+        json.dump({"messages": []}, tmp)
+        tmp.close()
+        loader = MessageLoader(messages_path=Path(tmp.name))
+        assert loader.total_messages >= 1
+
+    def test_message_with_unescaped_braces_does_not_crash(self):
+        path = self._create_temp_messages(["Hello {world} and {minutes}!"])
+        loader = MessageLoader(messages_path=path)
+        # Should not raise - uses str.replace instead of .format()
+        msg = loader.get_message(minutes=10)
+        assert "10" in msg
+
 
 class TestNotifier:
     @patch("src.notifications.notifier.notification.notify")

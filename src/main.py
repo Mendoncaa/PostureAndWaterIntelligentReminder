@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 class IntelligentReminder:
     """Main orchestrator: monitors activity and sends hydration/posture reminders."""
 
+    CHECK_INTERVAL_SECONDS = 30
+
     def __init__(self, settings: dict = None):
         self._settings = settings or load_settings()
         self._activity_threshold = get_activity_threshold_seconds(self._settings)
@@ -103,12 +105,15 @@ class IntelligentReminder:
         # Send notification outside of lock to avoid blocking activity recording
         if should_notify and message:
             self._notifier.send(message)
-            self._notifications_sent_count += 1
+            with self._lock:
+                self._notifications_sent_count += 1
             logger.info(f"Notificação #{self._notifications_sent_count} enviada.")
 
-        # Schedule next check (every 30 seconds)
+        # Schedule next check
         if self._running:
-            self._check_timer = threading.Timer(30, self._check_threshold)
+            self._check_timer = threading.Timer(
+                self.CHECK_INTERVAL_SECONDS, self._check_threshold
+            )
             self._check_timer.daemon = True
             self._check_timer.start()
 
